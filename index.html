@@ -22,7 +22,7 @@
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-      max-width: 400px;
+      max-width: 500px;
       width: 100%;
     }
     h1 {
@@ -71,6 +71,13 @@
       margin-top: 20px;
       font-size: 18px;
     }
+    .answers-list {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .answers-list span {
+      color: #ff6f61;
+    }
   </style>
 </head>
 <body>
@@ -78,35 +85,80 @@
     <h1>Test Results Calculator</h1>
     <label for="totalQuestions">Enter total number of questions:</label>
     <input type="number" id="totalQuestions" min="1" placeholder="Total questions">
-    <label for="correctAnswers">Enter number of correct answers:</label>
-    <input type="number" id="correctAnswers" min="0" placeholder="Correct answers">
-    <button onclick="calculateResults()">Calculate</button>
+    <button onclick="startTest()">Start Test</button>
+
+    <div id="testSection" style="display: none;">
+      <div id="questionsContainer"></div>
+      <button onclick="calculateResults()">Calculate</button>
+    </div>
+
     <div class="chart">
       <div class="chart-bar" id="chartBar"></div>
     </div>
     <div class="result" id="result"></div>
+    <div class="answers-list" id="answersList"></div>
   </div>
 
   <script>
-    function calculateResults() {
+    function startTest() {
       const totalQuestions = parseInt(document.getElementById('totalQuestions').value);
-      const correctAnswers = parseInt(document.getElementById('correctAnswers').value);
-      const chartBar = document.getElementById('chartBar');
-      const result = document.getElementById('result');
+      const questionsContainer = document.getElementById('questionsContainer');
+      const testSection = document.getElementById('testSection');
 
-      if (isNaN(totalQuestions) || isNaN(correctAnswers) || totalQuestions <= 0 || correctAnswers < 0 || correctAnswers > totalQuestions) {
-        alert('Please enter valid numbers.');
+      if (isNaN(totalQuestions) || totalQuestions <= 0) {
+        alert('Please enter a valid number of questions.');
         return;
       }
 
-      const wrongAnswers = totalQuestions - correctAnswers;
+      // Clear previous inputs
+      questionsContainer.innerHTML = '';
+
+      // Generate question inputs
+      for (let i = 1; i <= totalQuestions; i++) {
+        const questionDiv = document.createElement('div');
+        questionDiv.innerHTML = `
+          <label>Question ${i}:</label>
+          <input type="text" id="question${i}" placeholder="Enter your answer">
+        `;
+        questionsContainer.appendChild(questionDiv);
+      }
+
+      testSection.style.display = 'block';
+    }
+
+    function calculateResults() {
+      const totalQuestions = parseInt(document.getElementById('totalQuestions').value);
+      const chartBar = document.getElementById('chartBar');
+      const result = document.getElementById('result');
+      const answersList = document.getElementById('answersList');
+
+      let correctAnswers = 0;
+      const wrongAnswers = [];
+
+      // Randomly generate correct answers
+      const correctAnswerKey = [];
+      for (let i = 1; i <= totalQuestions; i++) {
+        correctAnswerKey.push(String.fromCharCode(65 + Math.floor(Math.random() * 4))); // Random A-D
+      }
+
+      // Check user's answers
+      for (let i = 1; i <= totalQuestions; i++) {
+        const userAnswer = document.getElementById(`question${i}`).value.toUpperCase();
+        if (userAnswer === correctAnswerKey[i - 1]) {
+          correctAnswers++;
+        } else {
+          wrongAnswers.push(`Q${i} (Correct: ${correctAnswerKey[i - 1]})`);
+        }
+      }
+
+      // Calculate percentage
       const percentage = Math.round((correctAnswers / totalQuestions) * 100);
 
       chartBar.style.width = percentage + '%';
       chartBar.textContent = percentage + '%';
 
-      let feedback = `You got ${correctAnswers} correct and ${wrongAnswers} wrong out of ${totalQuestions} questions.`;
-
+      // Provide feedback
+      let feedback = `You got ${correctAnswers} correct out of ${totalQuestions} questions.`;
       if (percentage >= 75) {
         feedback += ' Great job! You passed with high chances!';
         chartBar.style.backgroundColor = '#4caf50';
@@ -119,6 +171,17 @@
       }
 
       result.textContent = feedback;
+
+      // Display wrong answers
+      if (wrongAnswers.length > 0) {
+        answersList.innerHTML = `<p>Questions you got wrong:</p><ul>`;
+        wrongAnswers.forEach(answer => {
+          answersList.innerHTML += `<li><span>${answer}</span></li>`;
+        });
+        answersList.innerHTML += `</ul>`;
+      } else {
+        answersList.innerHTML = '<p>Perfect score! You got everything correct!</p>';
+      }
     }
   </script>
 </body>
