@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test Calculator</title>
+  <title>Test Results Calculator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -75,10 +75,12 @@
 </head>
 <body>
   <div class="container">
-    <h1>Test Calculator</h1>
-    <label for="score">Enter your test score (0-100):</label>
-    <input type="number" id="score" min="0" max="100" placeholder="Your score">
-    <button onclick="calculateChances()">Calculate</button>
+    <h1>Test Results Calculator</h1>
+    <label for="totalQuestions">Enter total number of questions:</label>
+    <input type="number" id="totalQuestions" min="1" placeholder="Total questions">
+    <label for="correctAnswers">Enter number of correct answers:</label>
+    <input type="number" id="correctAnswers" min="0" placeholder="Correct answers">
+    <button onclick="calculateResults()">Calculate</button>
     <div class="chart">
       <div class="chart-bar" id="chartBar"></div>
     </div>
@@ -86,30 +88,37 @@
   </div>
 
   <script>
-    function calculateChances() {
-      const score = document.getElementById('score').value;
+    function calculateResults() {
+      const totalQuestions = parseInt(document.getElementById('totalQuestions').value);
+      const correctAnswers = parseInt(document.getElementById('correctAnswers').value);
       const chartBar = document.getElementById('chartBar');
       const result = document.getElementById('result');
 
-      if (score === '' || score < 0 || score > 100) {
-        alert('Please enter a valid score between 0 and 100.');
+      if (isNaN(totalQuestions) || isNaN(correctAnswers) || totalQuestions <= 0 || correctAnswers < 0 || correctAnswers > totalQuestions) {
+        alert('Please enter valid numbers.');
         return;
       }
 
-      const chances = Math.min(score, 100);
-      chartBar.style.width = chances + '%';
-      chartBar.textContent = chances + '%';
+      const wrongAnswers = totalQuestions - correctAnswers;
+      const percentage = Math.round((correctAnswers / totalQuestions) * 100);
 
-      if (chances >= 75) {
-        result.textContent = 'Great job! You have high chances of passing!';
+      chartBar.style.width = percentage + '%';
+      chartBar.textContent = percentage + '%';
+
+      let feedback = `You got ${correctAnswers} correct and ${wrongAnswers} wrong out of ${totalQuestions} questions.`;
+
+      if (percentage >= 75) {
+        feedback += ' Great job! You passed with high chances!';
         chartBar.style.backgroundColor = '#4caf50';
-      } else if (chances >= 50) {
-        result.textContent = 'Not bad! You might make it, but study harder!';
+      } else if (percentage >= 50) {
+        feedback += ' Not bad! But you should study harder.';
         chartBar.style.backgroundColor = '#ffc107';
       } else {
-        result.textContent = 'You need to work harder to improve your chances.';
+        feedback += ' You need to work much harder to improve.';
         chartBar.style.backgroundColor = '#f44336';
       }
+
+      result.textContent = feedback;
     }
   </script>
 </body>
