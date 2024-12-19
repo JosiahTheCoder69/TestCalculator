@@ -52,33 +52,15 @@
     button:hover {
       background: #6a11cb;
     }
-    .chart {
+    .chart-container {
       margin-top: 20px;
       background: #444;
       border-radius: 10px;
       overflow: hidden;
-    }
-    .chart-bar {
-      height: 30px;
-      background: #6a11cb;
-      width: 0%;
-      text-align: right;
-      line-height: 30px;
-      color: #fff;
-      font-weight: bold;
-    }
-    .result {
-      margin-top: 20px;
-      font-size: 18px;
-    }
-    .answers-list {
-      margin-top: 20px;
-      text-align: left;
-    }
-    .answers-list span {
-      color: #ff6f61;
+      padding: 20px;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
@@ -88,21 +70,17 @@
     <button onclick="startTest()">Start Test</button>
 
     <div id="testSection" style="display: none;">
-      <div id="questionsContainer"></div>
-      <button onclick="calculateResults()">Calculate</button>
+      <div class="chart-container">
+        <canvas id="answersChart"></canvas>
+      </div>
     </div>
-
-    <div class="chart">
-      <div class="chart-bar" id="chartBar"></div>
-    </div>
-    <div class="result" id="result"></div>
-    <div class="answers-list" id="answersList"></div>
   </div>
 
   <script>
+    let answersChart;
+
     function startTest() {
       const totalQuestions = parseInt(document.getElementById('totalQuestions').value);
-      const questionsContainer = document.getElementById('questionsContainer');
       const testSection = document.getElementById('testSection');
 
       if (isNaN(totalQuestions) || totalQuestions <= 0) {
@@ -110,78 +88,37 @@
         return;
       }
 
-      // Clear previous inputs
-      questionsContainer.innerHTML = '';
-
-      // Generate question inputs
-      for (let i = 1; i <= totalQuestions; i++) {
-        const questionDiv = document.createElement('div');
-        questionDiv.innerHTML = `
-          <label>Question ${i}:</label>
-          <input type="text" id="question${i}" placeholder="Enter your answer">
-        `;
-        questionsContainer.appendChild(questionDiv);
-      }
-
       testSection.style.display = 'block';
+      generateChart(totalQuestions);
     }
 
-    function calculateResults() {
-      const totalQuestions = parseInt(document.getElementById('totalQuestions').value);
-      const chartBar = document.getElementById('chartBar');
-      const result = document.getElementById('result');
-      const answersList = document.getElementById('answersList');
-
-      let correctAnswers = 0;
-      const wrongAnswers = [];
-
-      // Randomly generate correct answers
-      const correctAnswerKey = [];
-      for (let i = 1; i <= totalQuestions; i++) {
-        correctAnswerKey.push(String.fromCharCode(65 + Math.floor(Math.random() * 4))); // Random A-D
+    function generateChart(totalQuestions) {
+      if (answersChart) {
+        answersChart.destroy();
       }
 
-      // Check user's answers
-      for (let i = 1; i <= totalQuestions; i++) {
-        const userAnswer = document.getElementById(`question${i}`).value.toUpperCase();
-        if (userAnswer === correctAnswerKey[i - 1]) {
-          correctAnswers++;
-        } else {
-          wrongAnswers.push(`Q${i} (Correct: ${correctAnswerKey[i - 1]})`);
+      const ctx = document.getElementById('answersChart').getContext('2d');
+      const correctAnswers = Math.floor(Math.random() * totalQuestions);
+      const wrongAnswers = totalQuestions - correctAnswers;
+
+      answersChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Correct Answers', 'Wrong Answers'],
+          datasets: [{
+            label: 'Answers',
+            data: [correctAnswers, wrongAnswers],
+            backgroundColor: ['#4caf50', '#f44336']
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
         }
-      }
-
-      // Calculate percentage
-      const percentage = Math.round((correctAnswers / totalQuestions) * 100);
-
-      chartBar.style.width = percentage + '%';
-      chartBar.textContent = percentage + '%';
-
-      // Provide feedback
-      let feedback = `You got ${correctAnswers} correct out of ${totalQuestions} questions.`;
-      if (percentage >= 75) {
-        feedback += ' Great job! You passed with high chances!';
-        chartBar.style.backgroundColor = '#4caf50';
-      } else if (percentage >= 50) {
-        feedback += ' Not bad! But you should study harder.';
-        chartBar.style.backgroundColor = '#ffc107';
-      } else {
-        feedback += ' You need to work much harder to improve.';
-        chartBar.style.backgroundColor = '#f44336';
-      }
-
-      result.textContent = feedback;
-
-      // Display wrong answers
-      if (wrongAnswers.length > 0) {
-        answersList.innerHTML = `<p>Questions you got wrong:</p><ul>`;
-        wrongAnswers.forEach(answer => {
-          answersList.innerHTML += `<li><span>${answer}</span></li>`;
-        });
-        answersList.innerHTML += `</ul>`;
-      } else {
-        answersList.innerHTML = '<p>Perfect score! You got everything correct!</p>';
-      }
+      });
     }
   </script>
 </body>
